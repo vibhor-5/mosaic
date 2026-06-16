@@ -51,7 +51,7 @@ impl BspNode {
         BspNode::Empty
     }
 
-    pub fn insert(&mut self, window_id: WindowId) -> bool {
+    pub fn insert(&mut self, window_id: WindowId, depth: usize) -> bool {
         match self {
             BspNode::Empty => {
                 *self = BspNode::Leaf { window_id };
@@ -59,8 +59,13 @@ impl BspNode {
             }
             BspNode::Leaf { window_id: existing_id } => {
                 let existing = *existing_id;
+                let dir = if depth % 2 == 0 {
+                    SplitDirection::Horizontal
+                } else {
+                    SplitDirection::Vertical
+                };
                 *self = BspNode::Split {
-                    direction: SplitDirection::Horizontal, // Default, can be refined based on aspect ratio
+                    direction: dir,
                     ratio: 0.5,
                     first: Box::new(BspNode::Leaf { window_id: existing }),
                     second: Box::new(BspNode::Leaf { window_id }),
@@ -68,10 +73,10 @@ impl BspNode {
                 true
             }
             BspNode::Split { first, second, .. } => {
-                if first.insert(window_id) {
+                if first.insert(window_id, depth + 1) {
                     true
                 } else {
-                    second.insert(window_id)
+                    second.insert(window_id, depth + 1)
                 }
             }
         }
@@ -293,7 +298,7 @@ impl LayoutEngine {
     pub fn add_window(&mut self, window_id: WindowId) {
         if !self.windows.contains(&window_id) {
             self.windows.push(window_id);
-            self.tree.insert(window_id);
+            self.tree.insert(window_id, 0);
         }
     }
 

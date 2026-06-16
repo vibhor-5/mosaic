@@ -225,3 +225,65 @@ pub fn request_trust() -> bool {
         result
     }
 }
+
+pub struct AXObserver(pub AXObserverRef);
+
+unsafe impl Send for AXObserver {}
+unsafe impl Sync for AXObserver {}
+
+impl Drop for AXObserver {
+    fn drop(&mut self) {
+        if !self.0.is_null() {
+            unsafe {
+                CFRelease(self.0 as CFTypeRef);
+            }
+        }
+    }
+}
+
+pub type AXObserverCallback = extern "C" fn(AXObserverRef, AXUIElementRef, CFStringRef, *mut c_void);
+
+impl AXObserver {
+    pub fn new(pid: i32, callback: AXObserverCallback) -> Result<Self, AXError> {
+        let mut obs: AXObserverRef = std::ptr::null_mut();
+        let err = unsafe { AXObserverCreate(pid as c_int, callback as *mut c_void, &mut obs) };
+        if err == K_AX_ERROR_SUCCESS && !obs.is_null() {
+            Ok(AXObserver(obs))
+        } else {
+            Err(err)
+        }
+    }
+
+    pub fn add_notification(&self, element: &AXElement, notification: &str, refcon: *mut c_void) -> Result<(), AXError> {
+        let notif_name = core_foundation::string::CFString::new(notification);
+        let err = unsafe { AXObserverAddNotification(self.0, element.0, notif_name.as_concrete_TypeRef(), refcon) };
+        if err == K_AX_ERROR_SUCCESS {
+            Ok(())
+        } else {
+            Err(err)
+        }
+    }
+
+    pub fn remove_notification(&self, element: &AXElement, notification: &str) -> Result<(), AXError> {
+        let notif_name = core_foundation::string::CFString::new(notification);
+        let err = unsafe { AXObserverRemoveNotification(self.0, element.0, notif_name.as_concrete_TypeRef()) };
+        if err == K_AX_ERROR_SUCCESS {
+            Ok(())
+        } else {
+            Err(err)
+        }
+    }
+
+    pub fn attach_to_run_loop(&self) {
+        unsafe {
+            let rl_source = AXObserverGetRunLoopSource(self.0);
+            if !rl_source.is_null() {
+                core_foundation::runloop::CFRunLoopAddSource(
+                    core_foundation::runloop::CFRunLoopGetMain(),
+                    rl_source as _,
+                    core_foundation::runloop::kCFRunLoopDefaultMode,
+                );
+            }
+        }
+    }
+}

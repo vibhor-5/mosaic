@@ -44,6 +44,8 @@ pub struct Mosaic {
     pub skylight: SkyLight,
     /// The connection ID to the macOS Window Server
     pub connection_id: i32,
+    /// Store observers so they don't drop
+    pub observers: Vec<accessibility::AXObserver>,
 }
 
 impl Mosaic {
@@ -79,6 +81,7 @@ impl Mosaic {
             layouts: std::collections::HashMap::new(),
             skylight,
             connection_id,
+            observers: Vec::new(),
         })
     }
 
@@ -156,6 +159,25 @@ impl Mosaic {
 
 
 
+extern "C" fn ax_observer_callback(
+    _observer: accessibility::AXObserverRef,
+    _element: accessibility::AXUIElementRef,
+    _notification: core_foundation::string::CFStringRef,
+    refcon: *mut std::os::raw::c_void,
+) {
+    if refcon.is_null() { return; }
+    let state_mutex = unsafe { &*(refcon as *const Mutex<Mosaic>) };
+    
+    // In a real app we'd decode `notification` and do fine-grained updates.
+    // For now, any event triggers a full refresh and retile.
+    if let Ok(mut s) = state_mutex.lock() {
+        s.tracker.refresh();
+        let cid = s.connection_id;
+        let active_space = s.skylight.get_active_space(cid);
+        s.retile_space(active_space);
+    }
+}
+
 fn main() {
     // Initialize logging
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
@@ -216,6 +238,26 @@ fn main() {
             active_space
         );
         s.retile_space(active_space);
+        
+        // Wire up AXObserver for each unique PID
+        let mut pids = std::collections::HashSet::new();
+        for w in s.tracker.all_windows() {
+            pids.insert(w.owner_pid);
+        }
+        
+        let state_ptr = Arc::as_ptr(&state) as *mut std::os::raw::c_void;
+        for pid in pids {
+            if let Ok(app_el) = accessibility::AXElement::application(pid) {
+                if let Ok(obs) = accessibility::AXObserver::new(pid, ax_observer_callback) {
+                    let _ = obs.add_notification(&app_el, "AXWindowCreated", state_ptr);
+                    let _ = obs.add_notification(&app_el, "AXUIElementDestroyed", state_ptr);
+                    let _ = obs.add_notification(&app_el, "AXFocusedWindowChanged", state_ptr);
+                    obs.attach_to_run_loop();
+                    s.observers.push(obs);
+                }
+            }
+        }
+        info!("Registered AXObservers for {} processes", s.observers.len());
     }
 
     info!("Mosaic is running. Send commands via `mosaic-msg`.");
@@ -225,6 +267,28 @@ fn main() {
     let r = running.clone();
     signal_hook::flag::register(signal_hook::consts::SIGINT, r.clone()).ok();
     signal_hook::flag::register(signal_hook::consts::SIGTERM, r.clone()).ok();
+
+    // Space polling background thread
+    let poll_state = Arc::clone(&state);
+    let poll_running = r.clone();
+    std::thread::spawn(move || {
+        let mut last_space = 0;
+        while poll_running.load(std::sync::atomic::Ordering::Relaxed) {
+            std::thread::sleep(std::time::Duration::from_millis(250));
+            if let Ok(mut s) = poll_state.lock() {
+                let cid = s.connection_id;
+                let active_space = s.skylight.get_active_space(cid);
+                if active_space != last_space {
+                    if last_space != 0 {
+                        info!("Space changed: {} -> {}", last_space, active_space);
+                        s.tracker.refresh();
+                        s.retile_space(active_space);
+                    }
+                    last_space = active_space;
+                }
+            }
+        }
+    });
 
     // Main run loop — process macOS events
     // The CFRunLoop is needed for Accessibility API observers to fire callbacks
