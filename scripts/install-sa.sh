@@ -14,11 +14,16 @@ if [ -z "$DOCK_PID" ]; then
     exit 1
 fi
 
-PAYLOAD_PATH="$(pwd)/sa/payload.dylib"
-
-if [ ! -f "$PAYLOAD_PATH" ]; then
-    echo "[-] Payload not found at $PAYLOAD_PATH"
-    echo "[-] Please run 'make -C sa' first"
+# Check common paths for the payload
+if [ -f "$(pwd)/sa/payload.dylib" ]; then
+    PAYLOAD_PATH="$(pwd)/sa/payload.dylib"
+elif [ -f "/opt/homebrew/lib/payload.dylib" ]; then
+    PAYLOAD_PATH="/opt/homebrew/lib/payload.dylib"
+elif [ -f "/usr/local/lib/payload.dylib" ]; then
+    PAYLOAD_PATH="/usr/local/lib/payload.dylib"
+else
+    echo "[-] Payload not found in standard installation directories."
+    echo "[-] If compiling from source, please run 'make -C sa' first."
     exit 1
 fi
 
