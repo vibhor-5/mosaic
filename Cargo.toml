@@ -1,0 +1,68 @@
+[package]
+name = "mosaic"
+version = "0.1.0"
+edition = "2021"
+description = "A fast, keyboard-driven tiling window manager for macOS with native Spaces integration"
+license = "MIT"
+authors = ["Vibhor Kumar"]
+
+[[bin]]
+name = "mosaic"
+path = "src/main.rs"
+
+[[bin]]
+name = "mosaic-msg"
+path = "src/msg.rs"
+
+[dependencies]
+# C standard library FFI (dlopen, dlsym, dlclose)
+libc = "0.2"
+
+# Core Foundation types (CFString, CFArray, CFDictionary, CFNumber, etc.)
+core-foundation = "0.10"
+core-foundation-sys = "0.8"
+
+# Core Graphics (CGRect, display APIs)
+core-graphics = "0.24"
+core-graphics-types = "0.2"
+
+# Objective-C runtime interop
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = [
+    "NSString",
+    "NSArray",
+    "NSDictionary",
+    "NSNotification",
+    "NSThread",
+    "NSRunLoop",
+] }
+objc2-app-kit = { version = "0.3", features = [
+    "NSWorkspace",
+    "NSScreen",
+    "NSRunningApplication",
+    "NSApplication",
+] }
+block2 = "0.6"
+
+# Dynamic library loading (for SkyLight private framework)
+libloading = "0.9"
+
+# Configuration
+toml = "0.8"
+serde = { version = "1", features = ["derive"] }
+
+# Logging
+log = "0.4"
+env_logger = "0.11"
+
+# Signal handling
+signal-hook = "0.3"
+
+# CLI argument parsing (for mosaic-msg)
+clap = { version = "4", features = ["derive"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

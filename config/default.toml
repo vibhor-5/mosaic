@@ -1,0 +1,225 @@
+# Mosaic Configuration File
+# ~/.config/mosaic/config.toml
+
+[general]
+# Default layout mode: "bsp", "monocle", or "master-stack"
+layout = "bsp"
+
+# Whether focus follows the mouse cursor
+focus_follows_mouse = false
+
+# Whether to auto-tile windows on launch
+auto_tile = true
+
+# Master-stack layout: ratio of master window (0.0 to 1.0)
+master_ratio = 0.55
+
+# Whether to animate window movements (false = instant, snappier)
+animate = false
+
+# Log level: "trace", "debug", "info", "warn", "error"
+log_level = "info"
+
+[gaps]
+# Pixels between windows
+inner = 8
+# Pixels between windows and screen edges
+outer = 8
+
+# ──────────────────────────────────────────────
+# Keybindings
+# ──────────────────────────────────────────────
+# Modifiers: "cmd", "alt", "ctrl", "shift"
+# Actions: focus, swap, layout, space, move-to-space, toggle, rotate, equalize, resize
+
+# Focus movement (vim-style hjkl)
+[[keybindings]]
+modifiers = ["alt"]
+key = "h"
+action = "focus west"
+
+[[keybindings]]
+modifiers = ["alt"]
+key = "j"
+action = "focus south"
+
+[[keybindings]]
+modifiers = ["alt"]
+key = "k"
+action = "focus north"
+
+[[keybindings]]
+modifiers = ["alt"]
+key = "l"
+action = "focus east"
+
+# Swap windows
+[[keybindings]]
+modifiers = ["alt", "shift"]
+key = "h"
+action = "swap west"
+
+[[keybindings]]
+modifiers = ["alt", "shift"]
+key = "j"
+action = "swap south"
+
+[[keybindings]]
+modifiers = ["alt", "shift"]
+key = "k"
+action = "swap north"
+
+[[keybindings]]
+modifiers = ["alt", "shift"]
+key = "l"
+action = "swap east"
+
+# Layouts
+[[keybindings]]
+modifiers = ["alt"]
+key = "e"
+action = "layout bsp"
+
+[[keybindings]]
+modifiers = ["alt"]
+key = "m"
+action = "layout monocle"
+
+[[keybindings]]
+modifiers = ["alt"]
+key = "s"
+action = "layout master-stack"
+
+# Toggles
+[[keybindings]]
+modifiers = ["alt"]
+key = "f"
+action = "toggle fullscreen"
+
+[[keybindings]]
+modifiers = ["alt", "shift"]
+key = "space"
+action = "toggle float"
+
+# Tree manipulation
+[[keybindings]]
+modifiers = ["alt"]
+key = "r"
+action = "rotate tree"
+
+[[keybindings]]
+modifiers = ["alt"]
+key = "equal"
+action = "equalize tree"
+
+# Space switching (native macOS Spaces)
+[[keybindings]]
+modifiers = ["alt"]
+key = "1"
+action = "space 1"
+
+[[keybindings]]
+modifiers = ["alt"]
+key = "2"
+action = "space 2"
+
+[[keybindings]]
+modifiers = ["alt"]
+key = "3"
+action = "space 3"
+
+[[keybindings]]
+modifiers = ["alt"]
+key = "4"
+action = "space 4"
+
+[[keybindings]]
+modifiers = ["alt"]
+key = "5"
+action = "space 5"
+
+# Move window to space
+[[keybindings]]
+modifiers = ["alt", "shift"]
+key = "1"
+action = "move-to-space 1"
+
+[[keybindings]]
+modifiers = ["alt", "shift"]
+key = "2"
+action = "move-to-space 2"
+
+[[keybindings]]
+modifiers = ["alt", "shift"]
+key = "3"
+action = "move-to-space 3"
+
+[[keybindings]]
+modifiers = ["alt", "shift"]
+key = "4"
+action = "move-to-space 4"
+
+[[keybindings]]
+modifiers = ["alt", "shift"]
+key = "5"
+action = "move-to-space 5"
+
+# Resize
+[[keybindings]]
+modifiers = ["alt", "ctrl"]
+key = "h"
+action = "resize west 0.05"
+
+[[keybindings]]
+modifiers = ["alt", "ctrl"]
+key = "l"
+action = "resize east 0.05"
+
+[[keybindings]]
+modifiers = ["alt", "ctrl"]
+key = "j"
+action = "resize south 0.05"
+
+[[keybindings]]
+modifiers = ["alt", "ctrl"]
+key = "k"
+action = "resize north 0.05"
+
+# ──────────────────────────────────────────────
+# Window Rules
+# ──────────────────────────────────────────────
+# Automatically float or assign windows based on app name or title
+
+[[rules]]
+app_name = "Calculator"
+action = "float"
+
+[[rules]]
+app_name = "System Settings"
+action = "float"
+
+[[rules]]
+app_name = "Archive Utility"
+action = "float"
+
+[[rules]]
+app_name = "Finder"
+title_contains = "Copy"
+action = "float"
+
+[[rules]]
+app_name = "Finder"
+title_contains = "Move"
+action = "float"
+
+# ──────────────────────────────────────────────
+# Blacklist - Apps that should NEVER be managed
+# ──────────────────────────────────────────────
+blacklist = [
+    "Notification Centre",
+    "Control Centre",
+    "Dock",
+    "WindowManager",
+    "SystemUIServer",
+    "Spotlight",
+]
