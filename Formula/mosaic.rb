@@ -1,9 +1,9 @@
 class Mosaic < Formula
   desc "Blazing fast, natively integrated macOS Tiling Window Manager"
   homepage "https://github.com/vibhor-5/mosaic"
-  url "https://github.com/vibhor-5/mosaic/releases/download/v0.1.2/mosaic-macos-universal.tar.gz"
-  sha256 "fc51f4e8ac14846a0f4e351c22e538f0224d7e7465109ee210665e3294e96c09"
-  version "0.1.0"
+  url "https://github.com/vibhor-5/mosaic/releases/download/v0.1.3/mosaic-macos-universal.tar.gz"
+  sha256 "c5c884e6bbb7c2f0f93f7d446b180f5ba4f39083317c22d98a29cb6bcd3e8cfe"
+  version "0.1.3"
   depends_on :macos
 
   def install
