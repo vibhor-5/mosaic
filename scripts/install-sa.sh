@@ -7,7 +7,7 @@
 # (specifically `csrutil enable --without fs --without debug`), similar to yabai.
 
 echo "[*] Locating Dock.app..."
-DOCK_PID=$(pgrep Dock)
+DOCK_PID=$(pgrep -x Dock)
 
 if [ -z "$DOCK_PID" ]; then
     echo "[-] Could not find Dock.app PID"
