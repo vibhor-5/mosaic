@@ -220,7 +220,8 @@ fn main() {
             cfg
         }
         Err(e) => {
-            warn!("Failed to load config ({:?}), using defaults", e);
+            warn!("Failed to load config ({:?}), generating default configuration at {:?}", e, config_path);
+            let _ = MosaicConfig::write_default(&config_path);
             MosaicConfig::default()
         }
     };

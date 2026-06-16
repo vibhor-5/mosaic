@@ -13,8 +13,8 @@ class Mosaic < Formula
     # Install the Scripting Addition payload to a shared lib folder
     lib.install "payload.dylib"
     
-    # Install helper scripts
-    pkgshare.install "install-sa.sh"
+    # Install helper script as an executable in the path
+    bin.install "install-sa.sh" => "mosaic-inject"
     pkgshare.install "install-service.sh"
     
     # Install example config
@@ -24,7 +24,7 @@ class Mosaic < Formula
   def caveats
     <<~EOS
       To enable instant Space switching, you must inject the Scripting Addition into Dock.app:
-        sudo #{pkgshare}/install-sa.sh
+        sudo mosaic-inject
 
       To start the mosaic daemon automatically on login:
         brew services start mosaic
