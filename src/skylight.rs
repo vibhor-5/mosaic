@@ -170,7 +170,7 @@ pub struct SkyLight {
     sls_space_destroy: FnSLSSpaceDestroy,
 
     // -- Space switching ------------------------------------------------------
-    sls_space_switch_to_space: FnSLSSpaceSwitchToSpace,
+    sls_space_switch_to_space: Option<FnSLSSpaceSwitchToSpace>,
 
     // -- Window–Space association ---------------------------------------------
     sls_move_windows_to_managed_space: FnSLSMoveWindowsToManagedSpace,
@@ -231,7 +231,15 @@ impl SkyLight {
             sls_space_destroy: resolve_sym!(handle, "SLSSpaceDestroy", FnSLSSpaceDestroy),
 
             // Space switching
-            sls_space_switch_to_space: resolve_sym!(handle, "SLSSpaceSwitchToSpace", FnSLSSpaceSwitchToSpace),
+            sls_space_switch_to_space: unsafe {
+                let cname = std::ffi::CStr::from_bytes_with_nul(b"SLSSpaceSwitchToSpace\0").unwrap();
+                let ptr = libc::dlsym(handle, cname.as_ptr());
+                if ptr.is_null() {
+                    None
+                } else {
+                    Some(std::mem::transmute::<*mut libc::c_void, FnSLSSpaceSwitchToSpace>(ptr))
+                }
+            },
 
             // Window–Space association
             sls_move_windows_to_managed_space: resolve_sym!(handle, "SLSMoveWindowsToManagedSpace", FnSLSMoveWindowsToManagedSpace),
@@ -322,7 +330,11 @@ impl SkyLight {
 
     /// Switch the user's view to the specified space.
     pub fn space_switch_to_space(&self, cid: i32, sid: u64) {
-        unsafe { (self.sls_space_switch_to_space)(cid, sid) }
+        if let Some(f) = self.sls_space_switch_to_space {
+            unsafe { f(cid, sid) }
+        } else {
+            log::warn!("SLSSpaceSwitchToSpace not available");
+        }
     }
 
     // -----------------------------------------------------------------------
