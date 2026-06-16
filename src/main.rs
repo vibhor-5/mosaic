@@ -154,9 +154,7 @@ impl Mosaic {
     }
 }
 
-mod skylight;
-pub mod layout;
-pub mod accessibility;
+
 
 fn main() {
     // Initialize logging
@@ -214,7 +212,7 @@ fn main() {
         let active_space = s.skylight.get_active_space(s.connection_id);
         info!(
             "Discovered {} windows, active space: {}",
-            s.tracker.window_count(),
+            s.tracker.managed_windows().len(),
             active_space
         );
         s.retile_space(active_space);

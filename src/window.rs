@@ -282,6 +282,10 @@ impl WindowTracker {
             .collect()
     }
 
+    pub fn all_windows(&self) -> Vec<&TrackedWindow> {
+        self.windows.values().collect()
+    }
+
     // -- Focus -------------------------------------------------------------
 
     /// Sets the currently focused window.
@@ -420,7 +424,7 @@ impl WindowTracker {
             dict.find(&key).and_then(|v| {
                 // SAFETY: we trust CG to return the correct type for numeric keys.
                 let num: CFNumber =
-                    unsafe { CFNumber::wrap_under_get_rule(*v as *const _) };
+                    unsafe { CFNumber::wrap_under_get_rule(v.as_CFTypeRef() as *const _) };
                 num.to_i64()
             })
         };
@@ -430,7 +434,7 @@ impl WindowTracker {
             let key = CFString::new(key_str);
             dict.find(&key).map(|v| {
                 let cf_str: CFString =
-                    unsafe { CFString::wrap_under_get_rule(*v as CFStringRef) };
+                    unsafe { CFString::wrap_under_get_rule(v.as_CFTypeRef() as CFStringRef) };
                 cf_str.to_string()
             })
         };
@@ -482,13 +486,13 @@ impl WindowTracker {
         let bounds_val = dict.find(&bounds_key)?;
 
         let bounds_dict: CFDictionary<CFString, CFType> =
-            unsafe { CFDictionary::wrap_under_get_rule(*bounds_val as *const _) };
+            unsafe { CFDictionary::wrap_under_get_rule(bounds_val.as_CFTypeRef() as *const _) };
 
         let get = |k: &str| -> Option<f64> {
             let key = CFString::new(k);
             bounds_dict.find(&key).and_then(|v| {
                 let num: CFNumber =
-                    unsafe { CFNumber::wrap_under_get_rule(*v as *const _) };
+                    unsafe { CFNumber::wrap_under_get_rule(v.as_CFTypeRef() as *const _) };
                 num.to_f64()
             })
         };

@@ -94,7 +94,7 @@ impl AXElement {
         let err = unsafe { AXUIElementCopyAttributeValue(self.0, attr_name.as_concrete_TypeRef(), &mut value) };
         if err == K_AX_ERROR_SUCCESS && !value.is_null() {
             unsafe {
-                Ok(T::wrap_under_create_rule(value as _))
+                Ok(T::wrap_under_create_rule(std::mem::transmute_copy(&value)))
             }
         } else {
             Err(err)
@@ -202,7 +202,6 @@ pub fn is_trusted() -> bool {
 }
 
 pub fn request_trust() -> bool {
-    use core_foundation::dictionary::CFDictionary;
     use core_foundation::string::CFString;
     use core_foundation::boolean::CFBoolean;
 

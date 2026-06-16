@@ -2,8 +2,6 @@
 //!
 //! Implements window tiling algorithms: BSP (Binary Space Partitioning), Monocle, and Master-Stack.
 
-use std::collections::VecDeque;
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Rect {
     pub x: f64,

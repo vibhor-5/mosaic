@@ -14,6 +14,8 @@ use std::io::{BufRead, BufReader, Write};
 use std::os::unix::net::UnixListener;
 use std::sync::{Arc, Mutex};
 
+use core_foundation::base::TCFType;
+
 use crate::layout::{Direction, LayoutMode, SplitDirection};
 use crate::Mosaic;
 
@@ -156,17 +158,20 @@ fn handle_move_to_space(args: &[&str], state: &Arc<Mutex<Mosaic>>) -> String {
     let mut s = state.lock().unwrap();
     let cid = s.connection_id;
 
-    // Get list of all spaces
-    let spaces = s.skylight.get_managed_display_spaces(cid);
-    if space_idx == 0 || space_idx > spaces.len() {
+    let spaces_raw = s.skylight.copy_managed_display_spaces(cid);
+    let spaces: core_foundation::array::CFArray<core_foundation::number::CFNumber> = unsafe {
+        core_foundation::array::CFArray::wrap_under_create_rule(spaces_raw as _)
+    };
+    if space_idx == 0 || space_idx > spaces.len() as usize {
         return format!("error: space {} does not exist (have {})", space_idx, spaces.len());
     }
 
-    let target_space = spaces[space_idx - 1];
+    let target_space = spaces.get((space_idx - 1) as isize).unwrap().to_i64().unwrap() as u64;
     if let Some(focused_id) = s.tracker.get_focused().map(|w| w.id) {
+        let wid_num = core_foundation::number::CFNumber::from(focused_id as i32);
+        let arr = core_foundation::array::CFArray::from_CFTypes(&[wid_num]);
         // Use SkyLight to move the window to the target space
-        s.skylight
-            .move_windows_to_space(cid, &[focused_id], target_space);
+        s.skylight.move_windows_to_managed_space(cid, arr.as_concrete_TypeRef(), target_space);
 
         // Update our internal tracking
         if let Some(w) = s.tracker.get_window_mut(focused_id) {
@@ -200,13 +205,16 @@ fn handle_switch_space(args: &[&str], state: &Arc<Mutex<Mosaic>>) -> String {
 
     let s = state.lock().unwrap();
     let cid = s.connection_id;
-    let spaces = s.skylight.get_managed_display_spaces(cid);
-    if space_idx == 0 || space_idx > spaces.len() {
+    let spaces_raw = s.skylight.copy_managed_display_spaces(cid);
+    let spaces: core_foundation::array::CFArray<core_foundation::number::CFNumber> = unsafe {
+        core_foundation::array::CFArray::wrap_under_create_rule(spaces_raw as _)
+    };
+    if space_idx == 0 || space_idx > spaces.len() as usize {
         return format!("error: space {} does not exist", space_idx);
     }
 
-    let target_space = spaces[space_idx - 1];
-    s.skylight.switch_to_space(cid, target_space);
+    let target_space = spaces.get((space_idx - 1) as isize).unwrap().to_i64().unwrap() as u64;
+    s.skylight.space_switch_to_space(cid, target_space);
     format!("ok: switched to space {}", space_idx)
 }
 
@@ -280,7 +288,7 @@ fn handle_resize(args: &[&str], state: &Arc<Mutex<Mosaic>>) -> String {
         "down" | "south" => SplitDirection::Vertical,
         _ => return format!("error: invalid direction '{}'", args[0]),
     };
-    let delta: f64 = match args[1].parse() {
+    let delta: f64 = match args[1].parse::<f64>() {
         Ok(d) => {
             // Negative delta for left/up, positive for right/down
             match args[0] {
@@ -332,12 +340,16 @@ fn handle_query(args: &[&str], state: &Arc<Mutex<Mosaic>>) -> String {
         }
         "spaces" => {
             let cid = s.connection_id;
-            let spaces = s.skylight.get_managed_display_spaces(cid);
+            let spaces_raw = s.skylight.copy_managed_display_spaces(cid);
+            let spaces: core_foundation::array::CFArray<core_foundation::number::CFNumber> = unsafe {
+                core_foundation::array::CFArray::wrap_under_create_rule(spaces_raw as _)
+            };
             let active = s.skylight.get_active_space(cid);
             let space_strs: Vec<String> = spaces
-                .iter()
+                .into_iter()
+                .map(|s| s.to_i64().unwrap() as u64)
                 .enumerate()
-                .map(|(i, &sid)| {
+                .map(|(i, sid)| {
                     format!(
                         "{{\"index\":{},\"id\":{},\"active\":{}}}",
                         i + 1,
