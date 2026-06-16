@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Layout engine module for Mosaic.
 //!
 //! Implements window tiling algorithms: BSP (Binary Space Partitioning), Monocle, and Master-Stack.
@@ -316,15 +317,19 @@ impl LayoutEngine {
             return Vec::new();
         }
 
+        let is_single = self.windows.len() == 1;
+        let actual_gap = if is_single { 0.0 } else { self.gap_outer };
+        let actual_inner = if is_single { 0.0 } else { self.gap_inner };
+
         let region = Rect {
-            x: screen.x + self.gap_outer,
-            y: screen.y + self.gap_outer,
-            width: screen.width - self.gap_outer * 2.0,
-            height: screen.height - self.gap_outer * 2.0,
+            x: screen.x + actual_gap,
+            y: screen.y + actual_gap,
+            width: screen.width - actual_gap * 2.0,
+            height: screen.height - actual_gap * 2.0,
         };
 
         match self.mode {
-            LayoutMode::Bsp => self.tree.compute_rects(region, self.gap_inner),
+            LayoutMode::Bsp => self.tree.compute_rects(region, actual_inner),
             LayoutMode::Monocle => {
                 self.windows.iter().map(|&id| (id, region)).collect()
             }
@@ -405,5 +410,66 @@ impl LayoutEngine {
     pub fn focus_direction(&self, current: WindowId, _dir: Direction) -> Option<WindowId> {
         // Fallback to simple next/prev for now since directional focus in BSP requires spatial awareness
         self.focus_next(current)
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_bsp_insertion_and_layout() {
+        let mut engine = LayoutEngine::new(LayoutMode::Bsp, 10.0, 20.0);
+        let screen = Rect { x: 0.0, y: 0.0, width: 1000.0, height: 1000.0 };
+
+        // Test Empty
+        assert_eq!(engine.compute_layout(screen).len(), 0);
+
+        // Add 1 window
+        engine.add_window(1);
+        let rects = engine.compute_layout(screen);
+        assert_eq!(rects.len(), 1);
+        // Smart gaps will apply here (no inner, but outer is 0 if 1 window based on my logic)
+        // Wait, if 1 window, smart gaps sets actual_gap to 0.0
+        assert_eq!(rects[0].1.width, 1000.0);
+
+        // Add 2nd window
+        engine.add_window(2);
+        let rects = engine.compute_layout(screen);
+        assert_eq!(rects.len(), 2);
+        
+        // Add 3rd window
+        engine.add_window(3);
+        let rects = engine.compute_layout(screen);
+        assert_eq!(rects.len(), 3);
+    }
+
+    #[test]
+    fn test_monocle_layout() {
+        let mut engine = LayoutEngine::new(LayoutMode::Monocle, 0.0, 0.0);
+        engine.add_window(1);
+        engine.add_window(2);
+        
+        let screen = Rect { x: 0.0, y: 0.0, width: 800.0, height: 600.0 };
+        let rects = engine.compute_layout(screen);
+        
+        assert_eq!(rects.len(), 2);
+        for (_, rect) in rects {
+            assert_eq!(rect.width, 800.0);
+            assert_eq!(rect.height, 600.0);
+        }
+    }
+
+    #[test]
+    fn test_window_removal() {
+        let mut engine = LayoutEngine::new(LayoutMode::Bsp, 0.0, 0.0);
+        engine.add_window(1);
+        engine.add_window(2);
+        assert!(engine.has_window(1));
+        assert!(engine.has_window(2));
+        
+        engine.remove_window(1);
+        assert!(!engine.has_window(1));
+        assert!(engine.has_window(2));
+        assert_eq!(engine.windows.len(), 1);
     }
 }

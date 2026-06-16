@@ -19,54 +19,79 @@
 //! mosaic-msg quit
 //! ```
 
+#![allow(dead_code)]
+use clap::{Parser, Subcommand};
 use std::io::{BufRead, BufReader, Write};
 use std::os::unix::net::UnixStream;
 
 const SOCKET_PATH: &str = "/tmp/mosaic.sock";
 
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Focus window in direction (north|south|east|west)
+    Focus { direction: String },
+    /// Swap focused window with neighbor in direction
+    Swap { direction: String },
+    /// Set layout (bsp|monocle|master-stack)
+    Layout { mode: String },
+    /// Switch to space N
+    Space { number: u64 },
+    /// Move focused window to space N
+    MoveToSpace { number: u64 },
+    /// Toggle property (float|fullscreen)
+    Toggle { target: String },
+    /// Rotate the BSP tree
+    Rotate { target: String },
+    /// Reset all split ratios to 50/50
+    Equalize { target: String },
+    /// Resize in direction by delta (0.0-1.0)
+    Resize { direction: String, delta: f64 },
+    /// Query state (windows|spaces|focused)
+    Query { target: String },
+    /// Force retile current space
+    Retile,
+    /// Stop the Mosaic daemon
+    Quit,
+}
+
 fn main() {
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    let cli = Cli::parse();
 
-    if args.is_empty() {
-        eprintln!("Usage: mosaic-msg <command> [args...]");
-        eprintln!();
-        eprintln!("Commands:");
-        eprintln!("  focus <direction>              Focus window in direction (north|south|east|west)");
-        eprintln!("  swap <direction>               Swap focused window with neighbor");
-        eprintln!("  layout <mode>                  Set layout (bsp|monocle|master-stack)");
-        eprintln!("  space <number>                 Switch to space N");
-        eprintln!("  move-to-space <number>         Move focused window to space N");
-        eprintln!("  toggle <target>                Toggle property (float|fullscreen)");
-        eprintln!("  rotate tree                    Rotate the BSP tree");
-        eprintln!("  equalize tree                  Reset all split ratios to 50/50");
-        eprintln!("  resize <direction> <delta>     Resize in direction by delta (0.0-1.0)");
-        eprintln!("  query <target>                 Query state (windows|spaces|focused)");
-        eprintln!("  retile                         Force retile current space");
-        eprintln!("  quit                           Stop the Mosaic daemon");
-        std::process::exit(1);
-    }
-
-    let command = args.join(" ");
+    let cmd_str = match &cli.command {
+        Commands::Focus { direction } => format!("focus {}", direction),
+        Commands::Swap { direction } => format!("swap {}", direction),
+        Commands::Layout { mode } => format!("layout {}", mode),
+        Commands::Space { number } => format!("space {}", number),
+        Commands::MoveToSpace { number } => format!("move-to-space {}", number),
+        Commands::Toggle { target } => format!("toggle {}", target),
+        Commands::Rotate { target } => format!("rotate {}", target),
+        Commands::Equalize { target } => format!("equalize {}", target),
+        Commands::Resize { direction, delta } => format!("resize {} {}", direction, delta),
+        Commands::Query { target } => format!("query {}", target),
+        Commands::Retile => "retile".to_string(),
+        Commands::Quit => "quit".to_string(),
+    };
 
     match UnixStream::connect(SOCKET_PATH) {
         Ok(mut stream) => {
-            // Send the command
-            if let Err(e) = writeln!(stream, "{}", command) {
+            if let Err(e) = writeln!(stream, "{}", cmd_str) {
                 eprintln!("Error sending command: {}", e);
                 std::process::exit(1);
             }
             stream.flush().ok();
-
-            // Shutdown the write half so the server knows we're done
             stream.shutdown(std::net::Shutdown::Write).ok();
 
-            // Read the response
             let reader = BufReader::new(&stream);
             for line in reader.lines() {
                 match line {
-                    Ok(response) => {
-                        println!("{}", response);
-                    }
+                    Ok(response) => println!("{}", response),
                     Err(e) => {
                         eprintln!("Error reading response: {}", e);
                         std::process::exit(1);

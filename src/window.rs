@@ -5,6 +5,7 @@
 //! [`TrackedWindow`]s and decides which ones are "managed" (actively tiled) versus
 //! floating or ignored.
 
+#![allow(dead_code)]
 use std::collections::{HashMap, HashSet};
 
 use core_foundation::array::{CFArray, CFArrayRef};
@@ -509,5 +510,22 @@ impl WindowTracker {
 impl Default for WindowTracker {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tracker_initialization() {
+        let tracker = WindowTracker::new();
+        assert_eq!(tracker.all_windows().len(), 0);
+    }
+
+    #[test]
+    fn test_tracker_default() {
+        let tracker = WindowTracker::default();
+        assert_eq!(tracker.all_windows().len(), 0);
     }
 }

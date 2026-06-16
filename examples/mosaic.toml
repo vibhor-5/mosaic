@@ -1,0 +1,24 @@
+[general]
+# The default layout engine. Options: "bsp", "monocle"
+layout = "bsp"
+
+[gaps]
+# Inner padding between adjacent windows
+inner = 8
+# Outer padding between windows and the screen edge
+outer = 8
+# When enabled, a single window will drop its outer gaps to fill the screen
+smart_gaps_on_monocle = true
+
+# Application-specific rules
+[[rules]]
+app_name = "System Settings"
+action = "Float"
+
+[[rules]]
+app_name = "Calculator"
+action = "Float"
+
+[[rules]]
+title_contains = "Picture in Picture"
+action = "Float"

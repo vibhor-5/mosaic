@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+
+      - name: Build Scripting Addition
+        run: |
+          make -C sa
+          mkdir -p bin
+          cp sa/payload.dylib bin/
+
+      - name: Build Mosaic (Universal)
+        run: |
+          cargo build --release --target aarch64-apple-darwin
+          cargo build --release --target x86_64-apple-darwin
+          
+          # Create universal binaries via lipo
+          lipo -create -output bin/mosaic target/aarch64-apple-darwin/release/mosaic target/x86_64-apple-darwin/release/mosaic
+          lipo -create -output bin/mosaic-msg target/aarch64-apple-darwin/release/mosaic-msg target/x86_64-apple-darwin/release/mosaic-msg
+          
+      - name: Package Release
+        run: |
+          cp scripts/install-sa.sh bin/
+          cp scripts/install-service.sh bin/
+          cp examples/mosaic.toml bin/
+          tar -czvf mosaic-macos-universal.tar.gz -C bin .
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: mosaic-macos-universal.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

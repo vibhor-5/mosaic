@@ -14,10 +14,14 @@
 
 mod accessibility;
 mod config;
-mod ipc;
-mod layout;
-mod skylight;
 mod window;
+mod layout;
+mod msg;
+mod hotkeys;
+mod ipc;
+mod skylight;
+mod features;
+mod sa;
 
 use log::{error, info, warn};
 use std::path::PathBuf;
@@ -46,6 +50,15 @@ pub struct Mosaic {
     pub connection_id: i32,
     /// Store observers so they don't drop
     pub observers: Vec<accessibility::AXObserver>,
+    
+    /// Windows banished to the hidden scratchpad
+    pub scratchpad: Vec<u32>,
+    /// Windows that should float over the tiling layout
+    pub floating_windows: std::collections::HashSet<u32>,
+    /// Marks mapping keys to window IDs
+    pub marks: std::collections::HashMap<char, u32>,
+    /// The Scripting Addition Mach IPC client (if injected into Dock)
+    pub sa_client: Option<sa::ScriptingAddition>,
 }
 
 impl Mosaic {
@@ -82,6 +95,10 @@ impl Mosaic {
             skylight,
             connection_id,
             observers: Vec::new(),
+            scratchpad: Vec::new(),
+            floating_windows: std::collections::HashSet::new(),
+            marks: std::collections::HashMap::new(),
+            sa_client: sa::ScriptingAddition::new(),
         })
     }
 
@@ -134,6 +151,7 @@ impl Mosaic {
         let rects = layout.compute_layout(screen);
 
         for (wid, rect) in rects {
+            if self.floating_windows.contains(&wid) { continue; } // Don't tile floaters
             if let Some(window) = self.tracker.get_window(wid) {
                 // Use Accessibility API to move + resize the window
                 if let Ok(app_element) =
@@ -259,6 +277,9 @@ fn main() {
         }
         info!("Registered AXObservers for {} processes", s.observers.len());
     }
+    
+    // Start native hotkey listener
+    hotkeys::start_hotkey_listener(Arc::clone(&state));
 
     info!("Mosaic is running. Send commands via `mosaic-msg`.");
 

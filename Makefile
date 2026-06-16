@@ -9,6 +9,18 @@ install: build
 	./scripts/install-service.sh
 	# Link the CLI to /usr/local/bin for easy access
 	sudo ln -sf "$$(pwd)/target/release/mosaic-msg" /usr/local/bin/mosaic-msg
+	@echo ""
+	@echo "============================================================"
+	@echo "Mosaic supports instant space switching via a Scripting Addition."
+	@echo "This requires System Integrity Protection (SIP) to be partially disabled."
+	@echo "If you have already disabled SIP, you can inject it now."
+	@echo "============================================================"
+	@read -p "Inject Scripting Addition into Dock.app? [y/N] " ans; \
+	if [ "$$ans" = "y" ] || [ "$$ans" = "Y" ]; then \
+		./scripts/install-sa.sh; \
+	else \
+		echo "Skipping Scripting Addition injection."; \
+	fi
 
 start:
 	launchctl load ~/Library/LaunchAgents/io.mosaic.daemon.plist || true

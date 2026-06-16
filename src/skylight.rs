@@ -12,6 +12,7 @@
 //! binary can degrade gracefully (or produce a clear error) if the symbols are
 //! unavailable on a particular OS version.
 
+#![allow(dead_code)]
 use std::ffi::{CStr, CString};
 use std::fmt;
 

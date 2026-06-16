@@ -289,3 +289,25 @@ fn default_blacklist() -> Vec<String> {
         "SystemUIServer".into(),
     ]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_config() {
+        let config = MosaicConfig::default();
+        assert_eq!(config.general.layout, "bsp");
+        assert_eq!(config.gaps.inner, 8);
+        assert_eq!(config.gaps.outer, 8);
+    }
+
+    #[test]
+    fn test_rule_action_parsing() {
+        // We can't directly parse RuleAction here without a mock TOML, 
+        // but we can verify its basic structure defaults.
+        let default_rules = default_rules();
+        assert!(default_rules.len() > 0);
+        assert_eq!(default_rules[0].app_name.as_deref(), Some("Calculator"));
+    }
+}

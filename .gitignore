@@ -1,1 +1,7 @@
 /target
+sa/*.a
+sa/*.o
+sa/*.dylib
+sa/mosaicServer.c
+sa/mosaicUser.c
+sa/mosaic.h

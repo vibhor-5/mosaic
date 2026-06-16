@@ -1,0 +1,10 @@
+#include <mach/std_types.defs>
+#include <mach/mach_types.defs>
+
+subsystem mosaic 500;
+
+routine move_window(
+    server: mach_port_t;
+    window_id: uint32_t;
+    space_id: uint64_t
+);

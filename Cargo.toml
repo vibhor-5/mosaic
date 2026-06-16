@@ -60,6 +60,7 @@ signal-hook = "0.3"
 
 # CLI argument parsing (for mosaic-msg)
 clap = { version = "4", features = ["derive"] }
+global-hotkey = "0.8.0"
 
 [profile.release]
 opt-level = 3

@@ -1,5 +1,6 @@
 //! Accessibility API wrapper module for Mosaic.
 
+#![allow(dead_code)]
 use core_foundation::base::{CFRelease, CFTypeRef, TCFType};
 use core_foundation::string::CFStringRef;
 use core_foundation::array::CFArrayRef;
