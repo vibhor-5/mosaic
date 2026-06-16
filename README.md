@@ -26,13 +26,13 @@ Drawing heavy inspiration from **i3** and **AeroSpace**, Mosaic intercepts macOS
 You can easily install Mosaic without compiling from source using our official tap:
 
 ```bash
-brew install vibhorkumar/tap/mosaic
+brew install vibhor-5/tap/mosaic
 ```
 
 ### Build from Source
 If you prefer to compile manually:
 ```bash
-git clone https://github.com/vibhorkumar/mosaic.git
+git clone https://github.com/vibhor-5/mosaic.git
 cd mosaic
 make build
 make install

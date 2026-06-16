@@ -1,7 +1,7 @@
 class Mosaic < Formula
   desc "Blazing fast, natively integrated macOS Tiling Window Manager"
-  homepage "https://github.com/vibhorkumar/mosaic"
-  url "https://github.com/vibhorkumar/mosaic/releases/download/v0.1.0/mosaic-macos-universal.tar.gz"
+  homepage "https://github.com/vibhor-5/mosaic"
+  url "https://github.com/vibhor-5/mosaic/releases/download/v0.1.0/mosaic-macos-universal.tar.gz"
   sha256 "REPLACE_WITH_SHA256_OF_TARBALL"
   version "0.1.0"
   depends_on :macos
